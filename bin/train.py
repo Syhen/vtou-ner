@@ -8,17 +8,24 @@ import json
 import os
 
 import numpy as np
+import pickle
 import torch.optim as optim
 from vtou_ner import base_path
 from vtou_ner.core.model import BiLSTMCRF
 from vtou_ner.core.train import ModelTrainer
 from vtou_ner.preprocessing.corpus import build_char2index
 from vtou_ner.preprocessing.corpus import build_vocab
+from vtou_ner.preprocessing.corpus import content2id
 from vtou_ner.preprocessing.sequence import pad_sequences
-from vtou_ner.preprocessing.text import chars2ids
 from vtou_ner.utils.reproduce import set_seed
 
 set_seed(1)
+# model hyper parameters
+EMBEDDING_DIM = 100
+HIDDEN_DIM = 200
+EPOCHS = 15
+SEQ_LEN = 60
+
 with open(os.path.join(base_path, 'datasets/boson', 'fmt_boson_data_split.json'), 'r') as f:
     data = json.load(f)
 X_text = []
@@ -30,26 +37,17 @@ for i in data:
     y.append(i['tags'])
 X_text = np.array(X_text)
 
-
-def content2id(data, vocab=None):
-    if vocab is None:
-        vocab = build_vocab(data, top_k=None)
-    char2index = build_char2index(vocab)
-    data = chars2ids(data, char2index)
-    return data
-
-
-EMBEDDING_DIM = 100
-HIDDEN_DIM = 200
-EPOCHS = 9
-SEQ_LEN = 60
+vocab = build_vocab(X, top_k=None)
 vocab_y = build_vocab(y, top_k=None)
 tag_size = len(build_char2index(vocab_y)) + 2
-
-vocab = build_vocab(X, top_k=None)
 tag2id = build_char2index(vocab_y)
 id2tag = dict(zip(tag2id.values(), tag2id.keys()))
-print(tag2id)
+# save id2tag mapping and vocab
+with open(os.path.join(base_path, "bin/models/id2tag.pkl"), 'wb') as f:
+    pickle.dump(id2tag, f, protocol=2)
+with open(os.path.join(base_path, "bin/models/vocab.pkl"), 'wb') as f:
+    pickle.dump(vocab, f, protocol=2)
+
 X = pad_sequences(content2id(X, vocab=vocab), maxlen=SEQ_LEN, left_pad=False)
 y = pad_sequences(content2id(y, vocab=vocab_y), maxlen=SEQ_LEN, left_pad=False)
 
