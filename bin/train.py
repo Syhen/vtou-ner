@@ -17,7 +17,6 @@ from vtou_ner.preprocessing.corpus import build_vocab
 from vtou_ner.preprocessing.sequence import pad_sequences
 from vtou_ner.preprocessing.text import chars2ids
 from vtou_ner.utils.reproduce import set_seed
-from vtou_ner.utils.predict import tag_ids2entities
 
 set_seed(1)
 with open(os.path.join(base_path, 'datasets/boson', 'fmt_boson_data_split.json'), 'r') as f:
@@ -78,6 +77,9 @@ try:
     model_trainer.fit(x_train, y_train, epochs=EPOCHS, batch_size=32, shuffle=True, use_gpu=False)
 except KeyboardInterrupt:
     print("killed by user")
+print("save model...")
+model_trainer.save(os.path.join(base_path, "bin/models/boson-ner.pkl"))
+print("model save successfully.")
 test_pred = model_trainer.predict(x_test, batch_size=16)
 # print(test_pred)
 recall, precision, f1 = model_trainer.evaluate(y_test, test_pred)
