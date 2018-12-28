@@ -17,6 +17,9 @@ numpy
 pandas
 
 # running
+1. setting environment
+    add `vtou-ner` path to your environment
+2. run command
 ```commandline
 # 安装依赖
 cd vtou-ner
@@ -68,6 +71,12 @@ f1 on validate set: 0.7113
 
 f1 on test set: 0.7239
 
+# example
+```bash
+cd vtou-ner/bin
+python predict.py --text "全球最大的中文搜索引擎、致力于让网民更便捷地获取信息，找到所求。百度超过千亿的中文网页数据库，可以瞬间找到相关的搜索结果。"
+# output: defaultdict(<class 'set'>, {'company_name': {'百度'}})
+```
 # next work
 1. 微调参数，使得模型在验证集上表现良好
 2. 使用[bert](https://github.com/huggingface/pytorch-pretrained-BERT)
