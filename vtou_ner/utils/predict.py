@@ -4,6 +4,7 @@ create on 2018-12-27 下午9:33
 
 author @heyao
 """
+from collections import defaultdict
 
 
 def tag_ids2entities(tag_ids, id2tag_mapping, meta_tags="BMEO"):
@@ -11,7 +12,7 @@ def tag_ids2entities(tag_ids, id2tag_mapping, meta_tags="BMEO"):
     :param tag_ids: list. id列表
     :param id2tag_mapping: dict. id到tag的转换表
     :param meta_tags: str. start, middle, end, ordinal tag.
-    :return: "%s_%s_%s" % (start_index, entity_category, entity_len) 
+    :return: "%s$%s$%s" % (start_index, entity_category, entity_len) 
     """
     t_start, t_middle, t_end, t_ordinal = list(meta_tags)
     entities = []
@@ -26,7 +27,7 @@ def tag_ids2entities(tag_ids, id2tag_mapping, meta_tags="BMEO"):
             if not has_entity:
                 continue
             entity_len = i - start_index + 1
-            entities.append("%s_%s_%s" % (start_index, entity_category, entity_len))
+            entities.append("%s$%s$%s" % (start_index, entity_category, entity_len))
             has_entity = False
             continue
         status, tag = id2tag_mapping[tag_id].split('_', 1)
@@ -36,9 +37,27 @@ def tag_ids2entities(tag_ids, id2tag_mapping, meta_tags="BMEO"):
             has_entity = True
         if status == t_end:
             entity_len = i - start_index + 1
-            entities.append("%s_%s_%s" % (start_index, entity_category, entity_len))
+            entities.append("%s$%s$%s" % (start_index, entity_category, entity_len))
             has_entity = False
     return entities
+
+
+def tag_ids2entities_names(text, tag_ids, id2tag_mapping, meta_tags="BMEO"):
+    """提取文本中的所有实体
+    :param text: str. 文本
+    :param tag_ids: list. id列表
+    :param id2tag_mapping: dict. id到tag的转换表
+    :param meta_tags: str. start, middle, end, ordinal tag. 
+    :return: dict. dict->list
+    """
+    entities_list = tag_ids2entities(tag_ids, id2tag_mapping, meta_tags)
+    entity_names = defaultdict(list)
+    if not entities_list:
+        return entity_names
+    for entity in entities_list:
+        start_index, entity_category, entity_len = entity.split('$')
+        entity_names[entity_category].append(text[int(start_index): int(start_index) + int(entity_len)])
+    return entity_names
 
 
 if __name__ == '__main__':
@@ -49,6 +68,7 @@ if __name__ == '__main__':
         'B_org_name': 16, 'E_org_name': 17, 'B_company_name': 18, 'E_company_name': 19
     }
     id2tag_mapping = dict(zip(tag2id_mapping.values(), tag2id_mapping.keys()))
-    answer = ['3_person_name_2', '6_company_name_4']
-    assert tag_ids2entities([1, 1, 1, 7, 8, 1, 18, 6, 6, 19, 0, 0],
-                            id2tag_mapping) == answer, "some error to transform entity"
+    answer = ['3$person_name$2', '6$company_name$4']
+    tag_ids = [1, 1, 1, 7, 8, 1, 18, 6, 6, 19, 0, 0]
+    assert tag_ids2entities(tag_ids, id2tag_mapping) == answer, "some error to transform entity"
+    print(tag_ids2entities_names("今天我何耀在北京银行", tag_ids, id2tag_mapping))
