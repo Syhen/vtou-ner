@@ -60,7 +60,8 @@ class ModelTrainer(object):
             X, y = self.validation_data
             self.predict(X, y, batch_size=train_loader.batch_size,
                          shuffle=False, use_gpu=use_gpu, val=True)
-            print("Epoch:", epoch, "train loss:", avg_loss, "val loss:", self.history['val_loss'][-1])
+            print("Epoch:", epoch, "train loss:", avg_loss, "val loss:", self.history['val_loss'][-1], "val f1:",
+                  self.history['val_f1'][-1])
         else:
             print("Epoch:", epoch, "train loss:", avg_loss)
         return model
@@ -105,7 +106,9 @@ class ModelTrainer(object):
             loss = self.loss_fn(x_batch, y_batch).item() if val else 0.
             avg_loss += loss / len(data_loader)
         if val:
+            _, _, val_f1 = self.evaluate(self.validation_data[1], preds)
             self.history['val_loss'].append(avg_loss)
+            self.history['val_f1'].append(val_f1)
         return np.array(preds)
 
     def save(self, filename):
