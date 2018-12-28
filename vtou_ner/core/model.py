@@ -16,7 +16,8 @@ STOP_TAG = "<STOP>"
 
 
 class BiLSTMCRF(nn.Module):
-    def __init__(self, seq_len, vocab_size, num_tags, embedding_dim=64, hidden_size=200, embedding_matrix=None):
+    def __init__(self, seq_len, vocab_size, num_tags, embedding_dim=64, hidden_size=200, dropout_prob=0.5,
+                 embedding_matrix=None):
         super(BiLSTMCRF, self).__init__()
         self.seq_len = seq_len
         self.vocab_size = vocab_size
@@ -28,12 +29,14 @@ class BiLSTMCRF(nn.Module):
             self.embedding_layer.weight.requires_grad = False
 
         self.lstm = nn.LSTM(embedding_dim, hidden_size // 2, num_layers=1, bidirectional=True, batch_first=True)
+        self.lstm_dropout = nn.Dropout(dropout_prob)
         self.lstm_encoder = nn.Linear(hidden_size, num_tags)
         self.crf = CRF(num_tags)
 
     def _get_features(self, seq):
         embeddings = self.embedding_layer(seq)
         features, _ = self.lstm(embeddings)
+        features = self.lstm_dropout(features)
         return self.lstm_encoder(features)
 
     def forward(self, seq):
